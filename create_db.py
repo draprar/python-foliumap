@@ -21,44 +21,46 @@ voivodeships = {
     'West Pomeranian': [('Szczecin', 53.4285, 14.5528), ('Koszalin', 54.1944, 16.1722), ('Stargard', 53.3365, 15.0496)]
 }
 
-# Connect or create DB
-conn = sqlite3.connect('visits.db')
-cursor = conn.cursor()
 
-# Create users table
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    voivodeship TEXT NOT NULL
-)
-''')
+def create_db():
+    # Connect or create DB
+    conn = sqlite3.connect('visits.db')
+    cursor = conn.cursor()
 
-# Create cities table
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS visited_cities (
-    id INTEGER PRIMARY KEY,
-    user_id INTEGER,
-    city_name TEXT,
-    latitude REAL,
-    longitude REAL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-)
-''')
+    # Create users table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        voivodeship TEXT NOT NULL
+    )
+    ''')
 
-# Insert users
-users = [(i + 1, f'User_{i + 1}', v) for i, v in enumerate(voivodeships.keys())]
-cursor.executemany('INSERT INTO users (id, name, voivodeship) VALUES (?, ?, ?)', users)
+    # Create cities table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS visited_cities (
+        id INTEGER PRIMARY KEY,
+        user_id INTEGER,
+        city_name TEXT,
+        latitude REAL,
+        longitude REAL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+    ''')
 
-# Insert cities per user
-for user_id, voivodeship in enumerate(voivodeships.keys(), start=1):
-    cities = random.sample(voivodeships[voivodeship], min(10, len(voivodeships[voivodeship])))
-    for city_name, lat, lon in cities:
-        cursor.execute('INSERT INTO visited_cities (user_id, city_name, latitude, longitude) VALUES (?, ?, ?, ?)',
-                       (user_id, city_name, lat, lon))
+    # Insert users
+    users = [(i + 1, f'User_{i + 1}', v) for i, v in enumerate(voivodeships.keys())]
+    cursor.executemany('INSERT INTO users (id, name, voivodeship) VALUES (?, ?, ?)', users)
 
-# Commit & close
-conn.commit()
-conn.close()
+    # Insert cities per user
+    for user_id, voivodeship in enumerate(voivodeships.keys(), start=1):
+        cities = random.sample(voivodeships[voivodeship], min(10, len(voivodeships[voivodeship])))
+        for city_name, lat, lon in cities:
+            cursor.execute('INSERT INTO visited_cities (user_id, city_name, latitude, longitude) VALUES (?, ?, ?, ?)',
+                           (user_id, city_name, lat, lon))
 
-print("Database 'visits.db' created with users and visited cities.")
+    # Commit & close
+    conn.commit()
+    conn.close()
+
+    print("Database 'visits.db' created with users and visited cities.")
